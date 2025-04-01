@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django AJAX CSRF</title>
+</head>
+<body>
+    <h1>AJAX with CSRF Protection</h1>
+
+    <input type="text" id="nameInput" placeholder="Enter your name">
+    <button id="sendData">Send Name</button>
+    
+    <h2>Saved Names:</h2>
+    <ul id="namesList"></ul>  <!-- Names will be displayed here -->
+
+    <script>
+        let csrfToken = "";
+
+        // Fetch CSRF Token
+        fetch("/get-csrf-token/")
+            .then(response => response.json())
+            .then(data => {
+                csrfToken = data.csrfToken;  // Store CSRF token
+            })
+            .catch(error => console.error("Error fetching CSRF token:", error));
+
+
+        // Send AJAX Request to Save Name
+        document.getElementById("sendData").addEventListener("click", function () {
+            let name = document.getElementById("nameInput").value;
+
+            fetch("/get-data/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken  // Send CSRF token
+                },
+                body: JSON.stringify({ name: name })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchSavedNames();  // Refresh names after saving
+            })
+            .catch(error => console.error("Error:", error));
+        });
+
+
+        // Fetch and Display Saved Names
+        function fetchSavedNames() {
+            fetch("/get-saved-names/")
+                .then(response => response.json())
+                .then(data => {
+                    let namesList = document.getElementById("namesList");
+                    namesList.innerHTML = "";  // Clear list
+
+                    data.names.forEach(name => {
+                        let li = document.createElement("li");
+                        li.innerHTML = `
+                        <span id="name-${name}">${name}</span>
+                        <button onclick="editName('${name}')">✏️ Edit</button>
+                        <button onclick="deleteName('${name}')">❌ Delete</button>
+                    `;                        
+                    namesList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error("Error fetching names:", error));
+        }
+
+                
+        // Fetch and Edit The Name
+        function editName(oldName) {
+            let nameSpan = document.getElementById(`name-${oldName}`);
+            let newNameInput = `<input type="text" id="newName-${oldName}" value="${oldName}">`;
+            let saveButton = `<button onclick="saveName('${oldName}')">💾 Save</button>`;
+    
+            nameSpan.innerHTML = newNameInput + saveButton;
+        }
+
+
+        // Fetcj and Save Name
+        function saveName(oldName) {
+            let newName = document.getElementById(`newName-${oldName}`).value;
+    
+            fetch("/edit-name/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken  
+                },
+                body: JSON.stringify({ old_name: oldName, new_name: newName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchSavedNames();  
+            })
+            .catch(error => console.error("Error editing name:", error));
+        }
+
+
+        // Fetch and Delete The Name
+        function deleteName(name) {
+            fetch("/delete-name/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken  
+                },
+                body: JSON.stringify({ name: name })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchSavedNames();  
+            })
+            .catch(error => console.error("Error deleting name:", error));
+        }
+
+        // Load saved names on page load
+        fetchSavedNames();
+    </script>
+</body>
+</html>

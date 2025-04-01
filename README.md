@@ -25,3 +25,30 @@ Make sure you have the following installed:
 1. Clone this repository to your local machine:
    ```bash
    git clone https://github.com/your-username/django-ajax-usernames.git
+   ```
+2. Navigate into the project directory:
+
+```bash
+cd django-ajax-usernames
+```
+3. Create a virtual environment:
+
+```bash
+python -m venv venv
+```
+4. Install the required dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+5. Apply migrations to set up the database:
+
+```bash
+python manage.py migrate
+```
+6. Run the development server:
+
+```bash
+python manage.py runserver
+```
+7. Open your browser and go to http://127.0.0.1:8000/ to see the application in action.
